@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Support Palestine | Profile Filter Maker 🇵🇸</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background-color: #fff;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/00/Flag_of_Palestine.svg');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      display: inline-block;
+      border-radius: 8px;
+    }
+
+    section {
+      padding: 20px;
+      text-align: center;
+    }
+
+    canvas {
+      margin-top: 20px;
+      border: 2px solid #555;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .controls button,
+    #downloadBtn,
+    button {
+      background: #2b9348;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .controls button:hover,
+    #downloadBtn:hover,
+    button:hover {
+      background: #007f5f;
+    }
+
+    #filters {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .filter-container {
+      width: 100px;
+      height: 100px;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 3px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .filter-container:hover {
+      border-color: #2b9348;
+    }
+
+    .filter-container.selected {
+      border-color: #e63946;
+    }
+
+    .filter-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.2s;
+    }
+
+    .filter-container:hover img {
+      transform: scale(1.1);
+    }
+
+    #urlInput {
+      margin: 10px auto;
+      padding: 8px;
+      width: 80%;
+      max-width: 400px;
+      font-size: 14px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul li {
+      margin: 10px 0;
+    }
+
+    ul li a {
+      color: #006400;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    ul li a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🇵🇸 Free Palestine | Profile Filter Creator</h1>
+  </header>
+
+  <section>
+    <h2 style="color:#b30000;">Why We Stand With Palestine</h2>
+    <p style="max-width: 800px; margin: 0 auto; font-size: 16px;">
+      For over 75 years, the people of Palestine have endured occupation, displacement, and violence. Families in Gaza and the West Bank are still living under siege. This is not a conflict — it is a humanitarian crisis.
+    </p>
+    <p style="font-size: 18px; margin-top: 10px; font-weight: bold;">
+      We raise our voices. We stand for justice. We stand for Palestine. 🇵🇸
+    </p>
+  </section>
+
+  <section>
+    <h3>Upload Your Picture</h3>
+    <input type="file" id="upload" accept="image/*"><br>
+
+    <h3>Choose a Filter:</h3>
+    <div id="filters"></div>
+
+    <canvas id="canvas" width="512" height="512"></canvas>
+
+    <div class="controls">
+      <button onclick="zoom(1.1)">Zoom In</button>
+      <button onclick="zoom(0.9)">Zoom Out</button>
+      <button onclick="resetImage()">Reset</button>
+    </div>
+
+    <button id="downloadBtn">Download Filtered Image</button>
+  </section>
+
+  <section id="news-section">
+    <h2>📰 Real-Time News from Gaza</h2>
+    <div id="news-feed" style="text-align: left; max-width: 800px; margin: 0 auto;"></div>
+  </section>
+
+  <section id="donate" style="background: #e8ffe8;">
+    <h2>🙏 Support Palestine Through Donations</h2>
+    <p>You can make a difference by donating to organizations actively helping in Gaza and the West Bank:</p>
+    <ul>
+      <li><a href="https://donate.unrwa.org/" target="_blank">🌐 UNRWA – United Nations Relief & Works Agency</a></li>
+      <li><a href="https://www.pcrf.net/" target="_blank">🩺 PCRF – Palestine Children’s Relief Fund</a></li>
+      <li><a href="https://www.map.org.uk/" target="_blank">❤️ MAP – Medical Aid for Palestinians</a></li>
+      <li><a href="https://www.islamicrelief.org/" target="_blank">🕌 Islamic Relief Worldwide</a></li>
+    </ul>
+  </section>
+
+  <section style="background: #f9f9f9;">
+    <h2>📣 Voices from Palestine</h2>
+    <div id="carousel" style="max-width:600px;margin:auto;">
+      <blockquote id="quote" style="font-style: italic; font-size: 20px;"></blockquote>
+      <p id="author" style="font-weight: bold;"></p>
+    </div>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const upload = document.getElementById('upload');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const filtersDiv = document.getElementById('filters');
+    const urlInput = document.getElementById('urlInput');
+
+    const filterPaths = [
+      '1.png',
+      '2.png',
+      '3.png',
+      '4.png',
+      '6.png'
+    ];
+
+    let userImage = null;
+    let selectedFilter = null;
+    let imageX = 0, imageY = 0;
+    let drawWidth = 512, drawHeight = 512;
+    let originalWidth = 512, originalHeight = 512;
+
+    function loadFilters() {
+      filtersDiv.innerHTML = '';
+      filterPaths.forEach((path) => {
+        const img = new Image();
+        img.src = path;
+
+        const container = document.createElement('div');
+        container.className = 'filter-container';
+        container.appendChild(img);
+        filtersDiv.appendChild(container);
+
+        container.onclick = () => {
+          document.querySelectorAll('.filter-container').forEach(el => el.classList.remove('selected'));
+          container.classList.add('selected');
+          selectedFilter = path;
+          drawCanvas();
+        };
+      });
+    }
+
+    function drawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (userImage) {
+        ctx.drawImage(userImage, imageX, imageY, drawWidth, drawHeight);
+      }
+      if (selectedFilter) {
+        const filterImg = new Image();
+        filterImg.src = selectedFilter;
+        filterImg.onload = () => {
+          ctx.drawImage(filterImg, 0, 0, canvas.width, canvas.height);
+        };
+      }
+    }
+
+    function zoom(factor) {
+      const centerX = imageX + drawWidth / 2;
+      const centerY = imageY + drawHeight / 2;
+      drawWidth *= factor;
+      drawHeight *= factor;
+      imageX = centerX - drawWidth / 2;
+      imageY = centerY - drawHeight / 2;
+      drawCanvas();
+    }
+
+    function resetImage() {
+      drawWidth = originalWidth;
+      drawHeight = originalHeight;
+      imageX = (canvas.width - drawWidth) / 2;
+      imageY = (canvas.height - drawHeight) / 2;
+      drawCanvas();
+    }
+
+    function loadImage(src) {
+      userImage = new Image();
+      userImage.crossOrigin = "anonymous";
+      userImage.src = src;
+      userImage.onload = () => {
+        const aspect = userImage.width / userImage.height;
+        if (aspect > 1) {
+          originalHeight = canvas.height;
+          originalWidth = canvas.height * aspect;
+        } else {
+          originalWidth = canvas.width;
+          originalHeight = canvas.width / aspect;
+        }
+        drawWidth = originalWidth;
+        drawHeight = originalHeight;
+        imageX = (canvas.width - drawWidth) / 2;
+        imageY = (canvas.height - drawHeight) / 2;
+        drawCanvas();
+      };
+    }
+
+    function loadImageFromURL() {
+      const url = urlInput.value.trim();
+      if (!url) {
+        alert("Please enter a valid image URL.");
+        return;
+      }
+      const proxyURL = "https://corsproxy.io/?" + encodeURIComponent(url);
+      fetch(proxyURL)
+        .then(res => res.blob())
+        .then(blob => {
+          const imageUrl = URL.createObjectURL(blob);
+          loadImage(imageUrl);
+        })
+        .catch(err => {
+          alert("Image could not be loaded (CORS error or invalid URL).");
+        });
+    }
+
+    upload.addEventListener('change', (e) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadImage(event.target.result);
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
+    downloadBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'support_palestine.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+
+    async function loadRSSFeed() {
+      const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
+      const rssURL = "https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml";
+
+      try {
+        const res = await fetch(proxy + encodeURIComponent(rssURL));
+        const data = await res.json();
+        const container = document.getElementById('news-feed');
+        const gazaArticles = data.items.filter(item =>
+          /gaza|palestine|israel/i.test(item.title)
+        ).slice(0, 5);
+        container.innerHTML = gazaArticles.map(item => `
+          <p><strong><a href="${item.link}" target="_blank">${item.title}</a></strong><br>
+          
+        `).join('');
+      } catch (error) {
+        document.getElementById('news-feed').innerHTML = "<p>News feed unavailable. Please try again later.</p>";
+      }
+    }
+
+    const quotes = [
+      { quote: "We just want to live free — without fear, without checkpoints.", author: "— A youth from Gaza" },
+      { quote: "We carry hope in our hearts, even when homes are turned to rubble.", author: "— A teacher in Rafah" },
+      { quote: "The world forgets us. But we are still here. Still resisting.", author: "— Palestinian journalist" },
+      { quote: "We are not numbers. We are mothers, fathers, children.", author: "— Medical worker in Khan Younis" },
+      { quote: "To exist is to resist.", author: "— Popular saying in Palestine" }
+    ];
+
+    let i = 0;
+    function showQuote() {
+      document.getElementById("quote").innerText = `"${quotes[i].quote}"`;
+      document.getElementById("author").innerText = quotes[i].author;
+      i = (i + 1) % quotes.length;
+    }
+
+    loadFilters();
+    loadRSSFeed();
+    showQuote();
+    setInterval(showQuote, 5000);
+  </script>
+
+</body>
+</html>
